@@ -1,5 +1,5 @@
 {
-  "name": "\"11. project-is-it-down\"",
+  "name": "project-is-it-down",
   "private": true,
   "scripts": {
     "build": "turbo run build",
