@@ -207,13 +207,13 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-gray-100">
-      {/* <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white py-2 px-4 z-50">
+      <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white py-2 px-4 z-50 h-12">
         <div className="container mx-auto flex justify-between items-center">
           <span className="font-semibold">Next refresh in: {countdown}s</span>
           <span className="text-sm">Last updated: {lastUpdated}</span>
         </div>
-      </div> */}
-      <main className="container mx-auto px-4 py-8 mt-16">
+      </div>
+      <main className="mx-auto px-4 pt-16">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">
           KAIST Server Status Monitor
         </h1>
