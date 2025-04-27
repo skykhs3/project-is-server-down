@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function POST() {
   // Simulated data for the last week
   const data = [
     { date: "2023-10-01", status: 1 },
