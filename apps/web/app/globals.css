@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+:root {
+  --kaist-blue: #003e7e;
+  --kaist-dark-blue: #00254c;
+  --kaist-light-blue: #e6f0fa;
+  --kaist-white: #ffffff;
+  --kaist-gray: #e9ecef;
+  --kaist-accent: #00a9e0;
+  --kaist-font: 'Geist', 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: var(--kaist-blue);
+  color: var(--kaist-white);
+  font-family: var(--kaist-font);
+}
+
+body {
+  background: var(--kaist-blue);
+  color: var(--kaist-white);
+  font-family: var(--kaist-font);
+}

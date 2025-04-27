@@ -168,9 +168,9 @@ export default function Home() {
     const fetchData = () => {
       const mockDomains = [
         "kaist.elice.io",
+        "otl.sparcs.org",
         "klms.kaist.ac.kr",
         "sso.kaist.ac.kr",
-        "otl.sparcs.org",
         "CS330 (OS SERVER)",
       ];
       const mockData = mockDomains.reduce(
@@ -206,24 +206,35 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-100">
-      <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white py-2 px-4 z-50 h-12">
+    <div className="min-h-screen bg-[var(--kaist-blue)]">
+      {/* KAIST Portal Header */}
+      <div className="flex flex-col items-center justify-center pt-12 pb-6">
+        <img src="/kaist-logo.svg" alt="KAIST Logo" className="h-12 mb-4" />
+        <h1 className="text-4xl font-extrabold text-white mb-4 tracking-wide">
+          KAIST SERVER STATUS
+        </h1>
+      </div>
+      {/* Refresh Bar */}
+      <div className="fixed top-0 left-0 right-0 bg-[var(--kaist-dark-blue)] text-white py-2 px-4 z-50 h-12 shadow">
         <div className="container mx-auto flex justify-between items-center">
           <span className="font-semibold">Next refresh in: {countdown}s</span>
           <span className="text-sm">Last updated: {lastUpdated}</span>
         </div>
       </div>
-      <main className="mx-auto px-4 pt-16">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">
-          KAIST Server Status Monitor
-        </h1>
+      {/* Main Content */}
+      <main className="mx-auto px-4 pt-4 max-w-2xl">
         <div className="grid grid-cols-1 gap-6">
           {Object.entries(domains).map(([domain, status]) => (
-            <ServerCard key={domain} domain={domain} status={status} />
+            <div
+              key={domain}
+              className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
+            >
+              <ServerCard domain={domain} status={status} />
+            </div>
           ))}
         </div>
       </main>
-      <footer className="mt-8 py-4 text-center text-gray-600">
+      <footer className="mt-8 py-4 text-center text-[var(--kaist-light-blue)]">
         <p>© 2025 KAIST Server Status Monitor</p>
       </footer>
     </div>
