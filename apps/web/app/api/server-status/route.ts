@@ -2,7 +2,7 @@ import { AllServerStatus } from "@/page";
 
 export async function GET(): Promise<Response> {
   try {
-    const res = await fetch("http://localhost:9999/api/server-status");
+    const res = await fetch(process.env.API_SERVER_URI || "");
     const data = await res.json();
     return Response.json(data satisfies AllServerStatus);
   } catch (error) {
