@@ -1,5 +1,13 @@
 services:
-
+  api-dev:
+    restart: always
+    build:
+      context: ./
+      dockerfile: api.Dockerfile
+    ports:
+      - "1025:1025"
+    depends_on:
+      - mongodb-dev
   cron-dev:
     restart: always
     env_file:

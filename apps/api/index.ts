@@ -1,10 +1,15 @@
-import express, { Request, Response } from "express";
 import dotenv from "dotenv";
-import { MongoClient } from "mongodb";
 dotenv.config();
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
-const options = {};
 
+import express, { Request, Response } from "express";
+import { MongoClient } from "mongodb";
+
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  throw new Error("MONGODB_URI is not defined in environment variables");
+}
+
+const options = {};
 const client = new MongoClient(uri, options);
 const clientPromise = client.connect();
 const app = express();
@@ -86,7 +91,6 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
         },
       ])
       .toArray();
-    console.log(data);
 
     const result: AllServerStatus = {};
     for (const item of data) {
@@ -110,7 +114,6 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
       };
       result[name] = domainStatus;
     }
-    console.log(result);
 
     res.status(200).json(result);
   } catch (error) {
@@ -118,7 +121,7 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
   }
 });
 
-const PORT = process.env.PORT || 9999;
+const PORT = process.env.PORT || 1025;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
