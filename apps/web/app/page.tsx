@@ -101,7 +101,7 @@ const ServerCard = ({
         </div>
         <div className="text-gray-500 text-sm mb-4">url: {status.url}</div>
         <div className="h-48 mb-4 overflow-x-auto" ref={graphContainerRef}>
-          <div className="min-w-[800px]">
+          <div className="min-w-[1000px]">
             <Line
               data={chartData}
               options={{
@@ -189,7 +189,7 @@ export default function Home() {
       {/* KAIST Portal Header */}
       <div className="flex flex-col items-center justify-center pt-12 pb-6">
         <img src="/kaist-logo.svg" alt="KAIST Logo" className="h-12 mb-4" />
-        <h1 className="text-4xl font-extrabold text-white mb-4 tracking-wide">
+        <h1 className="text-4xl font-extrabold text-white mb-4 tracking-wide text-center">
           KAIST SERVER STATUS
         </h1>
       </div>
