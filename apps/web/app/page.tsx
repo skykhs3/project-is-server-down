@@ -167,10 +167,7 @@ const ServerCard = ({
                       minRotation: 45,
                       autoSkip: false,
                       callback: (_, index) =>
-                        formatDate(
-                          status.history[status.history.length - 1 - index]
-                            ?.timestamp || ""
-                        ),
+                        formatDate(status.history[index]?.timestamp || ""),
                     },
                   },
                 },
@@ -196,17 +193,11 @@ const ServerCard = ({
 export default function Home() {
   const [names, setDomains] = useState<Record<string, DomainStatus>>({});
   const [countdown, setCountdown] = useState(5);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [currentTime, setCurrentTime] = useState<string>("");
 
   useEffect(() => {
-    const fetchData = async () => {
-      const mockData: AllServerStatus = await (
-        await fetch("/api/server-status")
-      ).json();
-
-      setDomains(mockData);
-      setCountdown(5);
-      setLastUpdated(
+    const updateTime = () => {
+      setCurrentTime(
         new Date().toLocaleTimeString("ko-KR", {
           hour: "2-digit",
           minute: "2-digit",
@@ -216,6 +207,20 @@ export default function Home() {
       );
     };
 
+    updateTime();
+    const timeInterval = setInterval(updateTime, 1000);
+    return () => clearInterval(timeInterval);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const mockData: AllServerStatus = await (
+        await fetch("/api/server-status")
+      ).json();
+
+      setDomains(mockData);
+      setCountdown(5);
+    };
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
@@ -241,7 +246,7 @@ export default function Home() {
       <div className="fixed top-0 left-0 right-0 bg-[var(--kaist-dark-blue)] text-white py-2 px-4 z-50 h-12 shadow">
         <div className="container mx-auto flex justify-between items-center">
           <span className="font-semibold">Next refresh in: {countdown}s</span>
-          <span className="text-sm">Last updated: {lastUpdated}</span>
+          <span className="text-sm">Current time: {currentTime}</span>
         </div>
       </div>
       {/* Main Content */}
