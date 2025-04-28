@@ -7,7 +7,7 @@ db.createCollection("website_checks", {
     metaField: "metadata",
     granularity: "minutes",
   },
-  expireAfterSeconds: 60 * 60 * 24 * 90,
+  expireAfterSeconds: 60 * 60 * 24 * 60,
 });
 
 // Create compound indexes for better query performance

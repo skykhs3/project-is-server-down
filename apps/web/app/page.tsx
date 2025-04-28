@@ -99,6 +99,7 @@ const ServerCard = ({
             {status.isOnline ? "UP" : "DOWN"}
           </span>
         </div>
+        <div className="text-gray-500 text-sm mb-4">url: {status.url}</div>
         <div className="h-48 mb-4 overflow-x-auto" ref={graphContainerRef}>
           <div className="min-w-[800px]">
             <Line
@@ -200,8 +201,8 @@ export default function Home() {
         </div>
       </div>
       {/* Main Content */}
-      <main className="mx-auto px-4 pt-4 max-w-2xl">
-        <div className="grid grid-cols-1 gap-6">
+      <main className="mx-auto px-4 pt-4 max-w-7xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Object.entries(names)
             .sort((a, b) => a[0].localeCompare(b[0]))
             .map(([name, status]) => (
