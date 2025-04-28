@@ -36,36 +36,18 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const generateMockData = (name: string): DomainStatus => {
-  const now = new Date();
-  const history: ServerStatus[] = [];
-
-  // Generate 5 seconds of data
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 5000);
-    const ping = Math.random() * 1000;
-    history.push({
-      timestamp: date.toISOString(),
-      responseTimeMs: ping,
-    });
-  }
-
-  // Find last downtime
-  const lastDowntime =
-    history
-      .slice()
-      .reverse()
-      .find((item) => item.responseTimeMs > 1000)?.timestamp || "";
-
-  return {
-    lastDowntime,
-    isOnline: history[history.length - 1]?.responseTimeMs !== 0,
-    history,
-    url: name,
-  };
+const formatDate2 = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString("ko-KR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 };
-
 const ServerCard = ({
   name,
   status,
@@ -93,6 +75,13 @@ const ServerCard = ({
       ],
     });
   }, [name, status.history]);
+
+  useEffect(() => {
+    if (graphContainerRef.current) {
+      graphContainerRef.current.scrollLeft =
+        graphContainerRef.current.scrollWidth;
+    }
+  }, []);
 
   return (
     <div className="w-full bg-white rounded-lg shadow-md overflow-hidden relative">
@@ -133,7 +122,10 @@ const ServerCard = ({
                       minRotation: 45,
                       autoSkip: false,
                       callback: (_, index) =>
-                        formatDate(status.history[index]?.timestamp || ""),
+                        formatDate(
+                          status.history[status.history.length - 1 - index]
+                            ?.timestamp || ""
+                        ),
                     },
                   },
                 },
@@ -146,7 +138,7 @@ const ServerCard = ({
             Last Downtime:{" "}
             <span className="font-medium">
               {status.lastDowntime
-                ? formatDate(status.lastDowntime)
+                ? formatDate2(status.lastDowntime)
                 : "No downtime recorded"}
             </span>
           </p>
