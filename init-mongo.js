@@ -7,17 +7,18 @@ db.createCollection("website_checks", {
     metaField: "metadata",
     granularity: "minutes",
   },
+  expireAfterSeconds: 60 * 60 * 24 * 90,
 });
 
 // Create indexes for better query performance
-db.website_checks.createIndex({ "metadata.domain": 1 });
+db.website_checks.createIndex({ "metadata.name": 1 });
 db.website_checks.createIndex({ timestamp: 1 });
-db.website_checks.createIndex({ "metadata.statusCode": 1 });
 
 // Insert a sample document to verify the collection
 db.website_checks.insertOne({
   timestamp: new Date(),
   metadata: {
+    name: "example",
     domain: "example.com",
     statusCode: 200,
   },

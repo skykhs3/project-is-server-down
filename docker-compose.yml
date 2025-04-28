@@ -1,15 +1,25 @@
 services:
+
+  cron-dev:
+    restart: always
+    env_file:
+      - .env
+    build:
+      context: ./
+      dockerfile: cron.Dockerfile
+    network_mode: host
   mongodb-dev:
     image: mongo:8.0
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=password123
-      - MONGO_INITDB_DATABASE=project-is-server-down
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
 
 volumes:
   mongodb_data: 
