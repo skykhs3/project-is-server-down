@@ -19,7 +19,7 @@ export async function GET(): Promise<Response> {
         {
           $project: {
             _id: 1,
-            items: { $slice: ["$items", 30] },
+            items: { $slice: ["$items", 60] },
           },
         },
         {
