@@ -8,10 +8,11 @@ import {
   PointElement,
   LineElement,
   Chart,
+  Tooltip,
 } from "chart.js";
 
 // Register the necessary scales and elements
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 export type AllServerStatus = Record<string, DomainStatus>;
 export interface ServerStatus {
@@ -48,6 +49,14 @@ const formatDate2 = (dateString: string) => {
     hour12: false,
   });
 };
+
+const customName = (name: string) => {
+  if (name == "CS330") {
+    return "CS330 (Pintos Server)";
+  }
+  return name;
+};
+
 const ServerCard = ({
   name,
   status,
@@ -71,6 +80,16 @@ const ServerCard = ({
           fill: false,
           borderColor: "rgba(75, 192, 192, 0.8)",
           tension: 0.1,
+          pointBackgroundColor: status.history.map((item) =>
+            item.responseTimeMs === 0
+              ? "rgba(255, 0, 0, 1)"
+              : "rgba(75, 192, 192, 0.8)"
+          ),
+          pointBorderColor: status.history.map((item) =>
+            item.responseTimeMs === 0
+              ? "rgba(255, 0, 0, 1)"
+              : "rgba(75, 192, 192, 0.8)"
+          ),
         },
       ],
     });
@@ -88,7 +107,9 @@ const ServerCard = ({
       <div id={name} className="relative -top-20 w-full h-0"></div>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">{name}</h3>
+          <h3 className="text-xl font-semibold text-gray-800">
+            {customName(name)}
+          </h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               status.isOnline
@@ -99,7 +120,17 @@ const ServerCard = ({
             {status.isOnline ? "UP" : "DOWN"}
           </span>
         </div>
-        <div className="text-gray-500 text-sm mb-4">url: {status.url}</div>
+        <p className="text-gray-500 text-sm mb-4 break-all">
+          url:{" "}
+          <a
+            href={status.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            {status.url}
+          </a>
+        </p>
         <div className="h-48 mb-4 overflow-x-auto" ref={graphContainerRef}>
           <div className="min-w-[1000px]">
             <Line
@@ -107,6 +138,19 @@ const ServerCard = ({
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                  mode: "index",
+                  intersect: false,
+                },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `${context.parsed.y}ms`;
+                      },
+                    },
+                  },
+                },
                 scales: {
                   y: {
                     position: "right",
