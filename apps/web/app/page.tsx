@@ -193,7 +193,7 @@ const ServerCard = ({
 export default function Home() {
   const [names, setDomains] = useState<Record<string, DomainStatus>>({});
   const [countdown, setCountdown] = useState(5);
-  const [currentTime, setCurrentTime] = useState<string>("");
+  const [currentTime, setCurrentTime] = useState<string>("---");
 
   useEffect(() => {
     const updateTime = () => {
@@ -236,25 +236,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--kaist-blue)]">
       {/* KAIST Portal Header */}
-      <div className="flex flex-col items-center justify-center pt-12 pb-6">
-        <img src="/kaist-logo.svg" alt="KAIST Logo" className="h-12 mb-4" />
-        <h1 className="text-4xl font-extrabold text-white mb-4 tracking-wide text-center">
+      <div className="flex flex-col items-center justify-center pt-12">
+        <h1 className="text-4xl font-extrabold text-white pt-8 pb-4 tracking-wide text-center">
           KAIST SERVER STATUS
         </h1>
       </div>
       {/* Refresh Bar */}
-      <div className="fixed top-0 left-0 right-0 bg-[var(--kaist-dark-blue)] text-white py-2 px-4 z-50 h-12 shadow">
-        <div className="container mx-auto flex justify-between items-center">
-          <span className="font-semibold">Next refresh in: {countdown}s</span>
-          <span className="text-sm">Current time: {currentTime}</span>
-        </div>
+      <div className="fixed top-0 left-0 right-0 bg-[var(--kaist-dark-blue)] text-white py-2 px-4 z-50 h-12 shadow items-center flex justify-between">
+        <span className="font-semibold">Next Refresh in: {countdown}s</span>
+        <span className="text-sm">Current Time: {currentTime}</span>
       </div>
       {/* Main Content */}
       <main className="mx-auto px-4 pt-4 max-w-7xl">
         {Object.keys(names).length === 0 ? (
-          <div className="block text-center text-white text-2xl">
+          <div className="block text-center text-white text-3xl">
             LOADING...
-            <div className="text-md mt-2">
+            <div className="text-lg mt-2">
               If loading persists, please report the issue to:{" "}
               <a
                 href="mailto:skykhs3@kaist.ac.kr"
