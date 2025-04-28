@@ -155,7 +155,7 @@ const ServerCard = ({
                   y: {
                     position: "right",
                     suggestedMin: 0,
-                    suggestedMax: 1000,
+                    suggestedMax: 800,
                     ticks: {
                       stepSize: 100,
                       callback: (value) => `${value}ms`,
@@ -214,11 +214,17 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const mockData: AllServerStatus = await (
+      const resJson: AllServerStatus = await (
         await fetch("/api/server-status")
       ).json();
 
-      setDomains(mockData);
+      for (const k in resJson) {
+        if (resJson[k]?.history) {
+          resJson[k].history = resJson[k].history.reverse();
+        }
+      }
+
+      setDomains(resJson);
       setCountdown(5);
     };
     fetchData();
@@ -237,7 +243,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--kaist-blue)]">
       {/* KAIST Portal Header */}
       <div className="flex flex-col items-center justify-center pt-12">
-        <h1 className="text-4xl font-extrabold text-white pt-8 pb-4 tracking-wide text-center">
+        <h1 className="text-4xl font-extrabold text-white pt-8 px-4 pb-4 tracking-wide text-center">
           KAIST SERVER STATUS
         </h1>
       </div>
