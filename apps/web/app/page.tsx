@@ -22,6 +22,7 @@ interface DomainStatus {
   lastDowntime: string;
   isOnline: boolean;
   history: ServerStatus[];
+  domain: string;
 }
 
 const formatDate = (dateString: string) => {
@@ -35,7 +36,7 @@ const formatDate = (dateString: string) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const generateMockData = (domain: string): DomainStatus => {
+const generateMockData = (name: string): DomainStatus => {
   const now = new Date();
   const history: ServerStatus[] = [];
 
