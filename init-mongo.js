@@ -10,9 +10,16 @@ db.createCollection("website_checks", {
   expireAfterSeconds: 60 * 60 * 24 * 90,
 });
 
-// Create indexes for better query performance
-db.website_checks.createIndex({ "metadata.name": 1 });
-db.website_checks.createIndex({ timestamp: 1 });
+// Create compound indexes for better query performance
+// Index for sorting and grouping by name and timestamp
+db.website_checks.createIndex({ "metadata.name": 1, timestamp: -1 });
+
+// Index for status code lookups
+db.website_checks.createIndex({
+  "metadata.name": 1,
+  "metadata.statusCode": 1,
+  timestamp: -1,
+});
 
 // Insert a sample document to verify the collection
 db.website_checks.insertOne({
