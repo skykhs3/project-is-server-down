@@ -1,16 +1,31 @@
-import { NextResponse } from "next/server";
+import clientPromise from "@/lib/mongodb";
 
-export async function POST() {
-  // Simulated data for the last week
-  const data = [
-    { date: "2023-10-01", status: 1 },
-    { date: "2023-10-02", status: 0 },
-    { date: "2023-10-03", status: 1 },
-    { date: "2023-10-04", status: 1 },
-    { date: "2023-10-05", status: 0 },
-    { date: "2023-10-06", status: 1 },
-    { date: "2023-10-07", status: 1 },
-  ];
+export async function GET() {
+  try {
+    const client = await clientPromise;
+    const db = client.db("project-is-server-down");
+    const collection = db.collection("website_checks");
 
-  return NextResponse.json(data);
+    const data = await collection
+      .aggregate([
+        { $sort: { "metadata.name": 1, timestamp: -1 } },
+        {
+          $group: {
+            _id: "$metadata.name",
+            items: { $push: "$$ROOT" },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            items: { $slice: ["$items", 30] },
+          },
+        },
+      ])
+      .toArray();
+
+    return Response.json({ data });
+  } catch (error) {
+    return Response.json({ error: JSON.stringify(error) }, { status: 500 });
+  }
 }

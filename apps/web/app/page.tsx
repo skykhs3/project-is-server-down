@@ -61,6 +61,7 @@ const generateMockData = (name: string): DomainStatus => {
     lastDowntime,
     isOnline: history[history.length - 1]?.responseTimeMs !== 0,
     history,
+    domain: name,
   };
 };
 
