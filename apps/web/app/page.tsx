@@ -202,18 +202,33 @@ export default function Home() {
       </div>
       {/* Main Content */}
       <main className="mx-auto px-4 pt-4 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Object.entries(names)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([name, status]) => (
-              <div
-                key={name}
-                className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
+        {Object.keys(names).length === 0 ? (
+          <div className="block text-center text-white text-2xl">
+            LOADING...
+            <div className="text-md mt-2">
+              If loading persists, please report the issue to:{" "}
+              <a
+                href="mailto:skykhs3@kaist.ac.kr"
+                className="underline hover:text-blue-200"
               >
-                <ServerCard name={name} status={status} />
-              </div>
-            ))}
-        </div>
+                skykhs3@kaist.ac.kr
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(names)
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([name, status]) => (
+                <div
+                  key={name}
+                  className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
+                >
+                  <ServerCard name={name} status={status} />
+                </div>
+              ))}
+          </div>
+        )}
       </main>
       <footer className="mt-8 py-4 text-center text-[var(--kaist-light-blue)]">
         <p>© 2025 KAIST Server Status Monitor</p>
