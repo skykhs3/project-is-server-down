@@ -13,16 +13,17 @@ import {
 // Register the necessary scales and elements
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
 
-interface ServerStatus {
+export type AllServerStatus = Record<string, DomainStatus>;
+export interface ServerStatus {
   timestamp: string;
   responseTimeMs: number;
 }
 
-interface DomainStatus {
+export interface DomainStatus {
   lastDowntime: string;
   isOnline: boolean;
   history: ServerStatus[];
-  domain: string;
+  url: string;
 }
 
 const formatDate = (dateString: string) => {
@@ -61,15 +62,15 @@ const generateMockData = (name: string): DomainStatus => {
     lastDowntime,
     isOnline: history[history.length - 1]?.responseTimeMs !== 0,
     history,
-    domain: name,
+    url: name,
   };
 };
 
 const ServerCard = ({
-  domain,
+  name,
   status,
 }: {
-  domain: string;
+  name: string;
   status: DomainStatus;
 }) => {
   const [chartData, setChartData] = useState<ChartData<"line">>({
@@ -83,7 +84,7 @@ const ServerCard = ({
       labels: status.history.map((item) => formatDate(item.timestamp)),
       datasets: [
         {
-          label: `Server Status - ${domain}`,
+          label: `Server Status - ${name}`,
           data: status.history.map((item) => item.responseTimeMs),
           fill: false,
           borderColor: "rgba(75, 192, 192, 0.8)",
@@ -91,20 +92,14 @@ const ServerCard = ({
         },
       ],
     });
-  }, [domain, status.history]);
-
-  useEffect(() => {
-    if (graphContainerRef.current) {
-      graphContainerRef.current.scrollLeft =
-        graphContainerRef.current.scrollWidth;
-    }
-  }, []);
+  }, [name, status.history]);
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="w-full bg-white rounded-lg shadow-md overflow-hidden relative">
+      <div id={name} className="relative -top-20 w-full h-0"></div>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">{domain}</h3>
+          <h3 className="text-xl font-semibold text-gray-800">{name}</h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               status.isOnline
@@ -162,26 +157,15 @@ const ServerCard = ({
 };
 
 export default function Home() {
-  const [domains, setDomains] = useState<Record<string, DomainStatus>>({});
+  const [names, setDomains] = useState<Record<string, DomainStatus>>({});
   const [countdown, setCountdown] = useState(5);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
   useEffect(() => {
-    const fetchData = () => {
-      const mockDomains = [
-        "kaist.elice.io",
-        "otl.sparcs.org",
-        "klms.kaist.ac.kr",
-        "sso.kaist.ac.kr",
-        "CS330 (OS SERVER)",
-      ];
-      const mockData = mockDomains.reduce(
-        (acc, domain) => {
-          acc[domain] = generateMockData(domain);
-          return acc;
-        },
-        {} as Record<string, DomainStatus>
-      );
+    const fetchData = async () => {
+      const mockData: AllServerStatus = await (
+        await fetch("/api/server-status")
+      ).json();
 
       setDomains(mockData);
       setCountdown(5);
@@ -226,14 +210,16 @@ export default function Home() {
       {/* Main Content */}
       <main className="mx-auto px-4 pt-4 max-w-2xl">
         <div className="grid grid-cols-1 gap-6">
-          {Object.entries(domains).map(([domain, status]) => (
-            <div
-              key={domain}
-              className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
-            >
-              <ServerCard domain={domain} status={status} />
-            </div>
-          ))}
+          {Object.entries(names)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([name, status]) => (
+              <div
+                key={name}
+                className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
+              >
+                <ServerCard name={name} status={status} />
+              </div>
+            ))}
         </div>
       </main>
       <footer className="mt-8 py-4 text-center text-[var(--kaist-light-blue)]">
