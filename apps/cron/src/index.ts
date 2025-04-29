@@ -27,9 +27,10 @@ async function sendHealthCheckRequest(
   url: string,
   fetchOptions: RequestInit = {}
 ) {
-  const startTime = Date.now();
+  let startTime: number = 0;
   try {
     logger.info("Sending request", { url, startTime });
+    startTime = Date.now();
     const response = await fetch(url, fetchOptions);
     // 2) 스트리밍으로 첫 청크만 읽어 preview 생성
     let preview = "";
@@ -40,7 +41,6 @@ async function sendHealthCheckRequest(
         // 텍스트로 변환 후 50글자만
         preview = new TextDecoder().decode(value).slice(0, 50);
       }
-      // 나머지 바디는 더 이상 필요 없으므로 읽기 취소
       await reader.cancel();
     } else {
       // 스트리밍 지원 안 하면 fallback
@@ -50,7 +50,6 @@ async function sendHealthCheckRequest(
 
     const endTime = Date.now();
     const responseTime = endTime - startTime;
-
     logger.info("Response received", {
       url,
       status: response.status,
@@ -110,13 +109,7 @@ async function runJob() {
     sendHealthCheckRequest("CS330", "http://localhost:7000/health", {
       method: "GET",
     }),
-    sendHealthCheckRequest(
-      "Elice",
-      "https://api-rest.elice.io/global/account/get/",
-      {
-        method: "GET",
-      }
-    ),
+
     sendHealthCheckRequest("OTL", "https://otl.sparcs.org/api/tracks", {
       method: "GET",
     }),
@@ -137,6 +130,13 @@ async function runJob() {
     sendHealthCheckRequest(
       "KLMS",
       "https://klms.kaist.ac.kr/theme/yui_combo.php?m/1744940622/block_panopto/asyncload/asyncload-min.js",
+      {
+        method: "GET",
+      }
+    ),
+    sendHealthCheckRequest(
+      "Elice",
+      "https://api-rest.elice.io/global/account/get/",
       {
         method: "GET",
       }

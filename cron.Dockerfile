@@ -8,6 +8,8 @@ RUN corepack enable
 # Copy the rest of the files
 COPY . .
 
+ENV UV_THREADPOOL_SIZE=16
+
 RUN pnpm install
 
 # Build the cron app
