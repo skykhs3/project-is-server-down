@@ -1,84 +1,119 @@
-# Turborepo starter
+# Is It Down? - KAIST SERVER Monitoring Service
+## [kaist.vercel.app](https://kaist.vercel.app) OR [kaist.site](https://kaist.site)
 
-This Turborepo starter is maintained by the Turborepo core team.
+A website monitoring service that checks the availability of websites and provides status updates. Built with a modern tech stack using Turborepo for monorepo management.
 
-## Using this example
+## Tech Stack
 
-Run the following command:
+- **Frontend**: Next.js
+- **Backend**: Node.js
+- **Database**: MongoDB
+- **Package Manager**: pnpm
+- **Build Tool**: Turborepo
+- **Containerization**: Docker
 
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Project Structure
 
 ```
-cd my-turborepo
-pnpm build
+.
+├── apps/           # Application code
+│   ├── api/        # API server
+│   ├── web/        # Next.js frontend
+│   └── cron/       # Background job service
+├── packages/       # Shared packages
+├── docker/         # Docker configuration
+└── ...
 ```
 
-### Develop
+## Prerequisites
 
-To develop all apps and packages, run the following command:
+- Node.js >= 22
+- pnpm >= 9.0.0
+- Docker and Docker Compose
+- MongoDB (for local development)
 
+## Environment Variables
+
+### Root Level (.env)
 ```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
+# .env 파일
+MONGO_INITDB_ROOT_USERNAME=root
+MONGO_INITDB_ROOT_PASSWORD=your-password
+MONGO_INITDB_DATABASE=project-is-server-down
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
+### API Service (apps/api/.env)
 ```
-npx turbo link
+MONGODB_URI="mongodb://root:your-password@mongodb-dev:27017/project-is-server-down?authSource=admin"
 ```
 
-## Useful Links
+### Web Service (apps/web/.env)
+```
+API_SERVER_URI="your_api_server_url"
+```
 
-Learn more about the power of Turborepo:
+### Cron Service (apps/cron/.env)
+```
+MONGODB_URI="mongodb://root:your-password@localhost:27017/project-is-server-down?authSource=admin"
+```
 
-- [Tasks](https://turborepo.com/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turborepo.com/docs/core-concepts/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## Development Setup
+
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+2. Create environment files:
+   ```bash
+   # Create .env files for each service
+   cp apps/api/.env.example apps/api/.env
+   cp apps/web/.env.example apps/web/.env
+   cp apps/cron/.env.example apps/cron/.env
+   ```
+
+3. Start development servers:
+   ```bash
+   docker-compose up -d mongodb-dev
+   pnpm dev
+   ```
+
+4. Available development scripts:
+   - `pnpm build`: Build all packages
+   - `pnpm dev`: Start development servers
+   - `pnpm lint`: Run linting
+   - `pnpm format`: Format code
+   - `pnpm check-types`: Check TypeScript types
+
+## Production Setup
+
+1. Create a `.env` files
+   ```bash
+   # Create .env files for each service
+   cp apps/api/.env.example apps/api/.env
+   cp apps/web/.env.example apps/web/.env
+   cp apps/cron/.env.example apps/cron/.env
+   ```
+
+2. Start the services using Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+## Docker Services
+
+- `api-dev`: Main API service
+- `cron-dev`: Background job service for monitoring
+- `mongodb-dev`: MongoDB database service
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License.

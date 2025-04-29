@@ -1,4 +1,12 @@
 services:
+  web-dev:
+    restart: always
+    build:
+      context: ./
+      dockerfile: web.Dockerfile
+    ports:
+      - "3000:3000"
+
   api-dev:
     restart: always
     build:
@@ -10,12 +18,12 @@ services:
       - mongodb-dev
   cron-dev:
     restart: always
-    env_file:
-      - .env
     build:
       context: ./
       dockerfile: cron.Dockerfile
     network_mode: host
+    depends_on:
+      - mongodb-dev
   mongodb-dev:
     image: mongo:8.0
     restart: always
