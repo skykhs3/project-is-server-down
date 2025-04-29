@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Line } from "react-chartjs-2";
 import { ChartData } from "chart.js";
+import Image from "next/image";
 import {
   CategoryScale,
   LinearScale,
@@ -155,9 +156,9 @@ const ServerCard = ({
                   y: {
                     position: "right",
                     suggestedMin: 0,
-                    suggestedMax: 800,
+                    suggestedMax: 400,
                     ticks: {
-                      stepSize: 100,
+                      stepSize: 50,
                       callback: (value) => `${value}ms`,
                     },
                   },
@@ -258,14 +259,23 @@ export default function Home() {
           <div className="block text-center text-white text-3xl">
             LOADING...
             <div className="text-lg mt-2">
-              If loading persists, please report the issue to:{" "}
-              <a
-                href="mailto:skykhs3@kaist.ac.kr"
-                className="underline hover:text-blue-200"
-              >
-                skykhs3@kaist.ac.kr
-              </a>
+              If loading persists, please report the issue.
             </div>
+            <a
+              href="https://forms.gle/hbmMxVh1Xs3UAeN56"
+              className="underline hover:text-blue-200 text-lg"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Bug Report or Suggestion
+            </a>
+            <Image
+              src="/nupjuk.png"
+              width={500}
+              height={500}
+              alt="nupjuk"
+              className="h-1/2 mx-auto"
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -283,6 +293,14 @@ export default function Home() {
         )}
       </main>
       <footer className="mt-8 py-4 text-center text-[var(--kaist-light-blue)]">
+        <a
+          href="https://forms.gle/hbmMxVh1Xs3UAeN56"
+          className="underline hover:text-blue-200 text-lg"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Bug Report or Suggestion
+        </a>
         <p>© 2025 KAIST Server Status Monitor</p>
       </footer>
     </div>
