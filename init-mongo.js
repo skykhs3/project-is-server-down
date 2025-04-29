@@ -22,14 +22,14 @@ db.website_checks.createIndex({
 });
 
 // Insert a sample document to verify the collection
-db.website_checks.insertOne({
-  timestamp: new Date(),
-  metadata: {
-    name: "example",
-    domain: "example.com",
-    statusCode: 200,
-  },
-  responseTimeMs: 124,
-  responseData: {},
-  errorMessage: null,
-});
+// db.website_checks.insertOne({
+//   timestamp: new Date(),
+//   metadata: {
+//     name: "example",
+//     domain: "example.com",
+//     statusCode: 200,
+//   },
+//   responseTimeMs: 124,
+//   responseData: {},
+//   errorMessage: null,
+// });
