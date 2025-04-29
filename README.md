@@ -53,7 +53,7 @@ MONGODB_URI="mongodb://root:your-password@mongodb-dev:27017/project-is-server-do
 
 ### Web Service (apps/web/.env)
 ```
-API_SERVER_URL="your_api_server_url"
+API_DEV_URL="your_API_DEV_URL"
 ```
 
 ### Cron Service (apps/cron/.env)
