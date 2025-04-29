@@ -1,7 +1,11 @@
 # Is It Down? - KAIST SERVER Monitoring Service
 ## [kaist.vercel.app](https://kaist.vercel.app) OR [kaist.site](https://kaist.site)
 
-A website monitoring service that checks the availability of websites and provides status updates. Built with a modern tech stack using Turborepo for monorepo management.
+A website monitoring service that checks the availability of websites and provides status updates.
+
+Built with a modern tech stack using Turborepo for monorepo management.
+
+![Demo](/demo.gif)
 
 ## Tech Stack
 
