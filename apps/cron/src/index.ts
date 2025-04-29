@@ -1,9 +1,22 @@
 import dotenv from "dotenv";
 import { CronJob } from "cron";
 import { MongoClient } from "mongodb";
+import winston from "winston";
 
 // Load environment variables
 dotenv.config();
+
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : "";
+      return `${timestamp} [${level}] ${message} ${metaStr}`;
+    })
+  ),
+  transports: [new winston.transports.Console()],
+});
 
 // MongoDB connection string
 const mongoUri: string = process.env.MONGODB_URI || "";
@@ -16,20 +29,34 @@ async function sendHealthCheckRequest(
 ) {
   const startTime = Date.now();
   try {
-    console.log(url, startTime, "Sending request...");
+    logger.info("Sending request", { url, startTime });
     const response = await fetch(url, fetchOptions);
-    let data: string;
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      data = JSON.stringify(await response.json());
+    // 2) 스트리밍으로 첫 청크만 읽어 preview 생성
+    let preview = "";
+    if (response.body) {
+      const reader = response.body.getReader();
+      const { value, done } = await reader.read();
+      if (value) {
+        // 텍스트로 변환 후 50글자만
+        preview = new TextDecoder().decode(value).slice(0, 50);
+      }
+      // 나머지 바디는 더 이상 필요 없으므로 읽기 취소
+      await reader.cancel();
     } else {
-      data = await response.text();
+      // 스트리밍 지원 안 하면 fallback
+      const text = await response.text();
+      preview = text.slice(0, 50);
     }
-    data = data.slice(0, 50);
 
     const endTime = Date.now();
-    console.log(url, endTime, "Response:", data);
     const responseTime = endTime - startTime;
+
+    logger.info("Response received", {
+      url,
+      status: response.status,
+      responseTime,
+      preview,
+    });
 
     const logEntry = {
       timestamp: new Date(startTime),
@@ -39,7 +66,7 @@ async function sendHealthCheckRequest(
         statusCode: response.status,
       },
       responseTimeMs: responseTime,
-      responseData: data,
+      responseData: preview,
     };
 
     try {
@@ -51,7 +78,11 @@ async function sendHealthCheckRequest(
     if (error instanceof Error) {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
-      console.log(url, endTime, "Error:", error.message);
+      logger.error("Request error", {
+        url,
+        responseTime,
+        message: error.message,
+      });
 
       const logEntry = {
         timestamp: new Date(startTime),
