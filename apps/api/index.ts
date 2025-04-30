@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import logger from "./utils/logger";
 import { getMongoClient } from "./utils/mongodb";
+import { CronJob } from "cron";
 
 import express, { Request, Response } from "express";
 import cors from "./middlewares/cors";
@@ -19,17 +20,12 @@ export interface DomainStatus {
   url: string;
 }
 
-const app = express();
+let cachedData: AllServerStatus = {};
 
-app.use(cors);
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.get("/api/server-status", async (req: Request, res: Response) => {
+async function fetchData() {
   let start = Date.now();
   const duration = [0, 0];
+
   try {
     const client = await getMongoClient();
     const db = client.db("project-is-server-down");
@@ -121,13 +117,27 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
       result[name] = domainStatus;
     }
 
+    cachedData = result;
     duration[1] = Date.now() - start;
-    logger.info(`Duration: ${duration[0]}ms, ${duration[1]}ms`);
-    res.status(200).json(result);
+    logger.info(`Data fetch duration: ${duration[0]}ms, ${duration[1]}ms`);
   } catch (error) {
-    logger.error(error);
-    res.status(200).json({});
+    logger.error("Error fetching data:", error);
   }
+}
+
+// 1초마다 데이터를 가져오는 크론잡 설정
+const job = new CronJob("*/1 * * * * *", fetchData, null, true, "Asia/Seoul");
+
+const app = express();
+
+app.use(cors);
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.get("/api/server-status", async (req: Request, res: Response) => {
+  res.status(200).json(cachedData);
 });
 
 const PORT = process.env.PORT || 1025;

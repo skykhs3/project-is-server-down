@@ -194,6 +194,7 @@ const ServerCard = ({
 };
 
 export default function Home() {
+  const REFRESH_INTERVAL_IN_SECONDS = 3;
   const [names, setDomains] = useState<Record<string, DomainStatus>>({});
   const [countdown, setCountdown] = useState(5);
   const [currentTime, setCurrentTime] = useState<string>("---");
@@ -231,16 +232,18 @@ export default function Home() {
       }
 
       setDomains(resJson);
-      setCountdown(5);
+      setCountdown(REFRESH_INTERVAL_IN_SECONDS);
     };
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, REFRESH_INTERVAL_IN_SECONDS * 1000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 5));
+      setCountdown((prev) =>
+        prev > 0 ? prev - 1 : REFRESH_INTERVAL_IN_SECONDS
+      );
     }, 1000);
     return () => clearInterval(timer);
   }, []);
