@@ -12,6 +12,8 @@ import {
   Tooltip,
 } from "chart.js";
 
+const defaultURL: string = process.env.NEXT_PUBLIC_API_DEV_URL || "";
+
 // Register the necessary scales and elements
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
@@ -215,9 +217,12 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log(defaultURL);
       const resJson: AllServerStatus = await (
-        await fetch("/api/server-status")
+        await fetch(defaultURL + "/api/server-status")
       ).json();
+
+      console.log(resJson);
 
       for (const k in resJson) {
         if (resJson[k]?.history) {
