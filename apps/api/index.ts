@@ -1,11 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
-
-import cors, { CorsOptions } from "cors";
 import logger from "./utils/logger";
 import { getMongoClient } from "./utils/mongodb";
 
 import express, { Request, Response } from "express";
+import cors from "./middlewares/cors";
 
 export type AllServerStatus = Record<string, DomainStatus>;
 export interface ServerStatus {
@@ -22,26 +21,7 @@ export interface DomainStatus {
 
 const app = express();
 
-let whiteList = [
-  "https://kaist.vercel.app",
-  "https://kaist.site",
-  "http://localhost:3000",
-];
-
-let corsOptions: CorsOptions = {
-  origin: function (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) {
-    if (origin && whiteList.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
+app.use(cors);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
