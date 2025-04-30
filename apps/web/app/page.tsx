@@ -194,9 +194,9 @@ const ServerCard = ({
 };
 
 export default function Home() {
-  const REFRESH_INTERVAL_IN_SECONDS = 3;
+  const REFRESH_INTERVAL_IN_SECONDS = 2;
   const [names, setDomains] = useState<Record<string, DomainStatus>>({});
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_IN_SECONDS);
   const [currentTime, setCurrentTime] = useState<string>("---");
 
   useEffect(() => {
