@@ -106,12 +106,11 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
       const history: ServerStatus[] = item.items.map((ele: any) => {
         return {
           timestamp: ele.timestamp,
-          responseTimeMs:
-            ele.metadata.statusCode === 0 ? 0 : ele.responseTimeMs,
+          responseTimeMs: ele.statusCode === 0 ? 0 : ele.responseTimeMs,
         };
       });
-      const isOnline: boolean = item.items[0].metadata.statusCode !== 0;
-      const url: string = item.items[0].metadata.url;
+      const isOnline: boolean = item.items[0].statusCode !== 0;
+      const url: string = item.items[0].url;
 
       const domainStatus: DomainStatus = {
         lastDowntime,
