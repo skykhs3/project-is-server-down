@@ -28,6 +28,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/server-status", async (req: Request, res: Response) => {
+  let start = Date.now();
+  const duration = [0, 0];
   try {
     const client = await getMongoClient();
     const db = client.db("project-is-server-down");
@@ -38,7 +40,14 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
         {
           $group: {
             _id: "$metadata.name",
-            items: { $push: "$$ROOT" },
+            items: {
+              $push: {
+                timestamp: "$timestamp",
+                statusCode: "$metadata.statusCode",
+                responseTimeMs: "$responseTimeMs",
+                url: "$metadata.url",
+              },
+            },
           },
         },
         {
@@ -87,6 +96,9 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
       ])
       .toArray();
 
+    duration[0] = Date.now() - start;
+    start = Date.now();
+
     const result: AllServerStatus = {};
     for (const item of data) {
       const name = item._id;
@@ -110,6 +122,8 @@ app.get("/api/server-status", async (req: Request, res: Response) => {
       result[name] = domainStatus;
     }
 
+    duration[1] = Date.now() - start;
+    logger.info(`Duration: ${duration[0]}ms, ${duration[1]}ms`);
     res.status(200).json(result);
   } catch (error) {
     logger.error(error);
