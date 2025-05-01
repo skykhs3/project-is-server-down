@@ -10,6 +10,16 @@ db.createCollection("website_checks", {
   expireAfterSeconds: 60 * 60 * 24 * 60,
 });
 
+db.website_checks.createIndex(
+  { timestamp: 1 },
+  {
+    expireAfterSeconds: 60 * 60 * 24 * 7,
+    partialFilterExpression: {
+      "metadata.statusCode": { $eq: 200 },
+    },
+  }
+);
+
 // Create compound indexes for better query performance
 // Index for sorting and grouping by name and timestamp
 db.website_checks.createIndex({ "metadata.name": 1, timestamp: -1 });
