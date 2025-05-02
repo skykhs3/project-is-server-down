@@ -194,15 +194,17 @@ const ServerCard = ({
 };
 
 export default function Home() {
-  const REFRESH_INTERVAL_IN_SECONDS = 2;
+  const REFRESH_INTERVAL_IN_SECONDS_FOR_DISPLAY = 10;
+  const REFRESH_INTERVAL_IN_MILLISECONDS_FOR_FETCH = 500;
   const [names, setDomains] = useState<Record<string, DomainStatus>>({});
-  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_IN_SECONDS);
+  const [countdown, setCountdown] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("---");
 
   useEffect(() => {
     const updateTime = () => {
+      const now = new Date();
       setCurrentTime(
-        new Date().toLocaleTimeString("ko-KR", {
+        now.toLocaleTimeString("ko-KR", {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
@@ -211,41 +213,52 @@ export default function Home() {
       );
     };
 
+    const updateCountdown = () => {
+      const now = new Date();
+      const seconds = now.getSeconds();
+      setCountdown(
+        (REFRESH_INTERVAL_IN_SECONDS_FOR_DISPLAY -
+          (seconds % REFRESH_INTERVAL_IN_SECONDS_FOR_DISPLAY)) %
+          REFRESH_INTERVAL_IN_SECONDS_FOR_DISPLAY
+      );
+    };
+
     updateTime();
+    updateCountdown();
+
     const timeInterval = setInterval(updateTime, 1000);
-    return () => clearInterval(timeInterval);
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    return () => {
+      clearInterval(timeInterval);
+      clearInterval(countdownInterval);
+    };
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log(defaultURL);
-      const resJson: AllServerStatus = await (
-        await fetch(defaultURL + "/api/server-status")
-      ).json();
-
-      console.log(resJson);
+      let resJson: AllServerStatus = {};
+      try {
+        resJson = await (await fetch(defaultURL + "/api/server-status")).json();
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        }
+        resJson = {};
+      }
 
       for (const k in resJson) {
         if (resJson[k]?.history) {
           resJson[k].history = resJson[k].history.reverse();
         }
       }
-
       setDomains(resJson);
-      setCountdown(REFRESH_INTERVAL_IN_SECONDS);
     };
     fetchData();
-    const interval = setInterval(fetchData, REFRESH_INTERVAL_IN_SECONDS * 1000);
+    const interval = setInterval(
+      fetchData,
+      REFRESH_INTERVAL_IN_MILLISECONDS_FOR_FETCH
+    );
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) =>
-        prev > 0 ? prev - 1 : REFRESH_INTERVAL_IN_SECONDS
-      );
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -283,6 +296,7 @@ export default function Home() {
               height={500}
               alt="nupjuk"
               className="h-1/2 mx-auto"
+              priority={true}
             />
           </div>
         ) : (
