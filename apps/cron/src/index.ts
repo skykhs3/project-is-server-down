@@ -96,7 +96,16 @@ async function sendHealthCheckRequest(
 
       try {
         const db = client.db();
-        await db.collection("website_checks").insertOne(logEntry);
+        await Promise.allSettled([
+          db.collection("website_checks").insertOne(logEntry),
+          db
+            .collection("latest_downtimes")
+            .updateOne(
+              { serverName: name },
+              { $set: { timestamp: new Date(startTime) } },
+              { upsert: true }
+            ),
+        ]);
       } finally {
       }
     }

@@ -30,75 +30,51 @@ async function fetchData() {
     const client = await getMongoClient();
     const db = client.db("project-is-server-down");
     const collection = db.collection("website_checks");
-    const data = await collection
-      .aggregate([
-        { $sort: { "metadata.name": 1, timestamp: -1 } },
-        {
-          $group: {
-            _id: "$metadata.name",
-            items: {
-              $push: {
-                timestamp: "$timestamp",
-                statusCode: "$metadata.statusCode",
-                responseTimeMs: "$responseTimeMs",
-                url: "$metadata.url",
+    const [statusRecordData, latestDowntimesData] = await Promise.all([
+      collection
+        .aggregate([
+          {
+            $match: {
+              timestamp: {
+                $gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
               },
             },
           },
-        },
-        {
-          $project: {
-            _id: 1,
-            items: { $slice: ["$items", 60] },
-          },
-        },
-        {
-          $lookup: {
-            from: "website_checks",
-            let: { name: "$_id" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$metadata.name", "$$name"] },
-                      { $eq: ["$metadata.statusCode", 0] },
-                    ],
-                  },
+          { $sort: { "metadata.name": 1, timestamp: -1 } },
+          {
+            $group: {
+              _id: "$metadata.name",
+              items: {
+                $push: {
+                  timestamp: "$timestamp",
+                  statusCode: "$metadata.statusCode",
+                  responseTimeMs: "$responseTimeMs",
+                  url: "$metadata.url",
                 },
               },
-              { $sort: { timestamp: -1 } },
-              { $limit: 1 },
-              { $project: { timestamp: 1, _id: 0 } },
-            ],
-            as: "latestStatusZero",
-          },
-        },
-        {
-          $addFields: {
-            latestStatusZeroTimestamp: {
-              $ifNull: [
-                { $arrayElemAt: ["$latestStatusZero.timestamp", 0] },
-                null,
-              ],
             },
           },
-        },
-        {
-          $project: {
-            latestStatusZero: 0,
+          {
+            $project: {
+              _id: 1,
+              items: { $slice: ["$items", 60] },
+            },
           },
-        },
-      ])
-      .toArray();
+        ])
+        .toArray(),
+
+      db.collection("latest_downtimes").find({}).toArray(),
+    ]);
 
     duration[0] = Date.now() - start;
     start = Date.now();
 
     const result: AllServerStatus = {};
-    for (const item of data) {
+    for (const item of statusRecordData) {
       const name = item._id;
-      const lastDowntime: string = item.latestStatusZeroTimestamp;
+      const lastDowntime = latestDowntimesData.find(
+        (ele: any) => ele.serverName === name
+      )?.timestamp;
       const history: ServerStatus[] = item.items.map((ele: any) => {
         return {
           timestamp: ele.timestamp,
