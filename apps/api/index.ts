@@ -36,7 +36,7 @@ async function fetchData() {
           {
             $match: {
               timestamp: {
-                $gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                $gte: new Date(Date.now() - 30 * 60 * 1000), //30분 이상 체크 데이터만 가져옴
               },
             },
           },
@@ -72,7 +72,7 @@ async function fetchData() {
     const result: AllServerStatus = {};
     for (const item of statusRecordData) {
       const name = item._id;
-      const lastDowntime = latestDowntimesData.find(
+      const lastDowntime: string = latestDowntimesData.find(
         (ele: any) => ele.serverName === name
       )?.timestamp;
       const history: ServerStatus[] = item.items.map((ele: any) => {
