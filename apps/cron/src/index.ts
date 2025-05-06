@@ -1,11 +1,37 @@
 import dotenv from "dotenv";
 import { CronJob } from "cron";
-import { MongoClient } from "mongodb";
-import winston from "winston";
+import { MongoClient, Db } from "mongodb";
+import winston, { log } from "winston";
 
 // Load environment variables
 dotenv.config();
 
+// Types
+interface HealthCheckConfig {
+  serverName: string;
+  url: string;
+  fetchOptions?: RequestInit;
+}
+
+interface LogEntry {
+  timestamp: Date;
+  metadata: {
+    name: string;
+    url: string;
+    statusCode: number;
+  };
+  responseTimeMs: number;
+  responseData?: string;
+  errorMessage?: string;
+}
+
+// Constants
+const MONGODB_URI = process.env.MONGODB_URI || "";
+const CRON_SCHEDULE = "*/10 * * * * *";
+const TIMEZONE = "Asia/Seoul";
+const PREVIEW_LENGTH = 50;
+
+// Logger configuration
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
@@ -18,38 +44,106 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-// MongoDB connection string
-const mongoUri: string = process.env.MONGODB_URI || "";
+// MongoDB client
 let client: MongoClient;
-// Function to send a health check request to a specified URL with options
-async function sendHealthCheckRequest(
-  name: string,
-  url: string,
-  fetchOptions: RequestInit = {}
-) {
-  let startTime: number = 0;
-  try {
-    logger.info("Sending request", { url, startTime });
-    startTime = Date.now();
-    const response = await fetch(url, fetchOptions);
-    // 2) 스트리밍으로 첫 청크만 읽어 preview 생성
-    let preview = "";
-    if (response.body) {
-      const reader = response.body.getReader();
-      const { value, done } = await reader.read();
-      if (value) {
-        // 텍스트로 변환 후 50글자만
-        preview = new TextDecoder().decode(value).slice(0, 50);
-      }
-      await reader.cancel();
-    } else {
-      // 스트리밍 지원 안 하면 fallback
-      const text = await response.text();
-      preview = text.slice(0, 50);
-    }
+let db: Db;
 
-    const endTime = Date.now();
-    const responseTime = endTime - startTime;
+// Health check configurations
+const healthCheckConfigs: HealthCheckConfig[] = [
+  {
+    serverName: "CS330",
+    url: "http://localhost:7000/health",
+    fetchOptions: { method: "GET" },
+  },
+  {
+    serverName: "OTL",
+    url: "https://otl.sparcs.org/api/tracks",
+    fetchOptions: { method: "GET" },
+  },
+  {
+    serverName: "SSO",
+    url: "https://sso.kaist.ac.kr/auth/twofactor/mfa/init",
+    fetchOptions: { method: "POST" },
+  },
+  {
+    serverName: "ERP",
+    url: "https://erp.kaist.ac.kr/com/cnst/PropCtr/findClientDevice.do",
+    fetchOptions: { method: "POST" },
+  },
+  {
+    serverName: "KLMS",
+    url: "https://klms.kaist.ac.kr/theme/yui_combo.php?m/1744940622/block_panopto/asyncload/asyncload-min.js",
+    fetchOptions: { method: "GET" },
+  },
+  {
+    serverName: "Elice",
+    url: "https://api-rest.elice.io/global/account/get/",
+    fetchOptions: { method: "GET" },
+  },
+  {
+    serverName: "CLUBS",
+    url: "https://clubs.sparcs.org/api/notices?pageOffset=1&itemCount=6",
+    fetchOptions: { method: "GET" },
+  },
+  {
+    serverName: "KAIST Server Status Monitor",
+    url: "http://localhost:1025/api/server-status",
+    fetchOptions: {
+      method: "GET",
+      headers: { origin: "https://kaist.vercel.app" },
+    },
+  },
+];
+
+// Helper functions
+async function getResponsePreview(response: Response): Promise<string> {
+  if (response.body) {
+    const reader = response.body.getReader();
+    const { value } = await reader.read();
+    await reader.cancel();
+    return value
+      ? new TextDecoder().decode(value).slice(0, PREVIEW_LENGTH)
+      : "";
+  }
+  const text = await response.text();
+  return text.slice(0, PREVIEW_LENGTH);
+}
+
+async function saveLogEntry(logEntry: LogEntry): Promise<void> {
+  try {
+    await db.collection("website_checks").insertOne(logEntry);
+    if (
+      !(
+        logEntry.metadata.statusCode < 500 &&
+        logEntry.metadata.statusCode >= 200
+      )
+    ) {
+      await db
+        .collection("latest_downtimes")
+        .updateOne(
+          { serverName: logEntry.metadata.name },
+          { $set: { timestamp: logEntry.timestamp } },
+          { upsert: true }
+        );
+    }
+  } catch (error) {
+    logger.error("Failed to save log entry", { error });
+  }
+}
+
+// Main health check function
+async function sendHealthCheckRequest(
+  config: HealthCheckConfig
+): Promise<void> {
+  const { serverName, url, fetchOptions } = config;
+  const startTime = Date.now();
+
+  try {
+    logger.info("Sending request", { url });
+    const response = await fetch(url, fetchOptions);
+    const preview = await getResponsePreview(response);
+    const responseTime = Date.now() - startTime;
+
     logger.info("Response received", {
       url,
       status: response.status,
@@ -57,105 +151,68 @@ async function sendHealthCheckRequest(
       preview,
     });
 
-    const logEntry = {
+    const logEntry: LogEntry = {
       timestamp: new Date(startTime),
       metadata: {
-        name: name,
-        url: url,
+        name: serverName,
+        url,
         statusCode: response.status,
       },
       responseTimeMs: responseTime,
       responseData: preview,
     };
 
-    try {
-      const db = client.db();
-      await db.collection("website_checks").insertOne(logEntry);
-    } finally {
-    }
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
-      logger.error("Request error", {
+    await saveLogEntry(logEntry);
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    logger.error("Request error", {
+      url,
+      responseTime,
+      message: errorMessage,
+    });
+
+    const logEntry: LogEntry = {
+      timestamp: new Date(startTime),
+      metadata: {
+        name: serverName,
         url,
-        responseTime,
-        message: error.message,
-      });
+        statusCode: 0,
+      },
+      responseTimeMs: responseTime,
+      errorMessage,
+    };
 
-      const logEntry = {
-        timestamp: new Date(startTime),
-        metadata: {
-          name: name,
-          url: url,
-          statusCode: 0,
-        },
-        responseTimeMs: responseTime,
-        errorMessage: error.message,
-      };
-
-      try {
-        const db = client.db();
-        await Promise.allSettled([
-          db.collection("website_checks").insertOne(logEntry),
-          db
-            .collection("latest_downtimes")
-            .updateOne(
-              { serverName: name },
-              { $set: { timestamp: new Date(startTime) } },
-              { upsert: true }
-            ),
-        ]);
-      } finally {
-      }
-    }
+    await saveLogEntry(logEntry);
   }
 }
 
-// Function to run the job
-async function runJob() {
-  await Promise.all([
-    sendHealthCheckRequest("CS330", "http://localhost:7000/health", {
-      method: "GET",
-    }),
-
-    sendHealthCheckRequest("OTL", "https://otl.sparcs.org/api/tracks", {
-      method: "GET",
-    }),
-    sendHealthCheckRequest(
-      "SSO",
-      "https://sso.kaist.ac.kr/auth/twofactor/mfa/init",
-      {
-        method: "POST",
-      }
-    ),
-    sendHealthCheckRequest(
-      "ERP",
-      "https://erp.kaist.ac.kr/com/cnst/PropCtr/findClientDevice.do",
-      {
-        method: "POST",
-      }
-    ),
-    sendHealthCheckRequest(
-      "KLMS",
-      "https://klms.kaist.ac.kr/theme/yui_combo.php?m/1744940622/block_panopto/asyncload/asyncload-min.js",
-      {
-        method: "GET",
-      }
-    ),
-    sendHealthCheckRequest(
-      "Elice",
-      "https://api-rest.elice.io/global/account/get/",
-      {
-        method: "GET",
-      }
-    ),
-  ]);
+// Job runner
+async function runJob(): Promise<void> {
+  await Promise.all(healthCheckConfigs.map(sendHealthCheckRequest));
 }
 
-async function main() {
-  client = await MongoClient.connect(mongoUri);
-  const job = new CronJob("*/10 * * * * *", runJob, null, true, "Asia/Seoul");
+// Main function
+async function main(): Promise<void> {
+  try {
+    client = await MongoClient.connect(MONGODB_URI);
+    db = client.db();
+
+    const job = new CronJob(CRON_SCHEDULE, runJob, null, true, TIMEZONE);
+    logger.info("Health check job started");
+  } catch (error) {
+    logger.error("Failed to start health check job", { error });
+    process.exit(1);
+  }
 }
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  logger.info("Shutting down...");
+  await client?.close();
+  process.exit(0);
+});
 
 main();
