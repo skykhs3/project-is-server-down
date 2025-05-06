@@ -78,7 +78,10 @@ async function fetchData() {
       const history: ServerStatus[] = item.items.map((ele: any) => {
         return {
           timestamp: ele.timestamp,
-          responseTimeMs: ele.statusCode === 0 ? 0 : ele.responseTimeMs,
+          responseTimeMs:
+            ele.statusCode < 500 && ele.statusCode >= 200
+              ? ele.responseTimeMs
+              : 0,
         };
       });
       const isOnline: boolean = item.items[0].statusCode !== 0;
