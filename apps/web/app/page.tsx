@@ -18,6 +18,7 @@ const defaultURL: string = process.env.NEXT_PUBLIC_API_DEV_URL || "";
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 export type AllServerStatus = Record<string, DomainStatus>;
+export type AllServerStatusList = [string, DomainStatus][];
 export interface ServerStatus {
   timestamp: string;
   responseTimeMs: number;
@@ -53,11 +54,32 @@ const formatDate2 = (dateString: string) => {
   });
 };
 
-const customName = (name: string) => {
-  if (name == "CS330") {
-    return "CS330 (Pintos Server)";
-  }
-  return name;
+const customizeServerName = (
+  serverNameList: AllServerStatusList
+): AllServerStatusList => {
+  const res1: AllServerStatusList = serverNameList.sort((a, b) => {
+    // 우선 정렬할 서버 이름들
+    const priorityServers = ["KLMS", "OTL", "CS330", "Elice", "SSO"];
+
+    for (const server of priorityServers) {
+      if (a[0] == server) {
+        return -1;
+      }
+      if (b[0] == server) {
+        return 1;
+      }
+    }
+    // 그 외의 경우 알파벳 순으로 정렬
+    return a[0].localeCompare(b[0]);
+  });
+
+  const res2: AllServerStatusList = res1.map(([name, status]) => {
+    if (name == "CS330") {
+      return ["CS330 (Pintos Server)", status];
+    }
+    return [name, status];
+  });
+  return res2;
 };
 
 const ServerCard = ({
@@ -110,9 +132,7 @@ const ServerCard = ({
       <div id={name} className="relative -top-20 w-full h-0"></div>
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">
-            {customName(name)}
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-800">{name}</h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               status.isOnline
@@ -196,7 +216,7 @@ const ServerCard = ({
 export default function Home() {
   const REFRESH_INTERVAL_IN_SECONDS_FOR_DISPLAY = 10;
   const REFRESH_INTERVAL_IN_MILLISECONDS_FOR_FETCH = 500;
-  const [names, setDomains] = useState<Record<string, DomainStatus>>({});
+  const [serverNameList, setServerNameList] = useState<AllServerStatusList>([]);
   const [countdown, setCountdown] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("---");
 
@@ -251,7 +271,8 @@ export default function Home() {
           resJson[k].history = resJson[k].history.reverse();
         }
       }
-      setDomains(resJson);
+      const resArray: AllServerStatusList = Object.entries(resJson);
+      setServerNameList(customizeServerName(resArray));
     };
     fetchData();
     const interval = setInterval(
@@ -276,7 +297,7 @@ export default function Home() {
       </div>
       {/* Main Content */}
       <main className="mx-auto px-4 pt-4 max-w-7xl">
-        {Object.keys(names).length === 0 ? (
+        {serverNameList.length === 0 ? (
           <div className="block text-center text-white text-3xl">
             LOADING...
             <div className="text-lg mt-2">
@@ -301,16 +322,14 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(names)
-              .sort((a, b) => a[0].localeCompare(b[0]))
-              .map(([name, status]) => (
-                <div
-                  key={name}
-                  className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
-                >
-                  <ServerCard name={name} status={status} />
-                </div>
-              ))}
+            {serverNameList.map(([name, status]) => (
+              <div
+                key={name}
+                className="bg-white rounded-xl shadow-lg border border-[var(--kaist-gray)]"
+              >
+                <ServerCard name={name} status={status} />
+              </div>
+            ))}
           </div>
         )}
       </main>

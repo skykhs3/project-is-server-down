@@ -79,12 +79,13 @@ async function fetchData() {
         return {
           timestamp: ele.timestamp,
           responseTimeMs:
-            ele.statusCode < 500 && ele.statusCode >= 200
+            ele.statusCode < 400 && ele.statusCode >= 200
               ? ele.responseTimeMs
               : 0,
         };
       });
-      const isOnline: boolean = item.items[0].statusCode !== 0;
+      const isOnline: boolean =
+        item.items[0].statusCode >= 200 && item.items[0].statusCode < 400;
       const url: string = item.items[0].url;
 
       const domainStatus: DomainStatus = {
